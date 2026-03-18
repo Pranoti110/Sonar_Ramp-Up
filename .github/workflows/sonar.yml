@@ -1,5 +1,8 @@
-
 name: SonarQube Cloud scan
+
+# Opt in to Node 24 for JS-based Actions (checkout, setup-node, etc.)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   push:
@@ -10,24 +13,26 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history improves analysis
+          fetch-depth: 0
 
-      - name: Use Node.js 20
+      # Build & test (adjust to your stack)
+      - name: Use Node.js 20 for your project runtime
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
-      - name: Run tests and collect coverage
+      - name: Unit tests with coverage
         run: npm test -- --coverage
 
       - name: SonarQube Scan (SonarQube Cloud)
         uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # For SonarQube Cloud, SONAR_HOST_URL is not required
+        # SONAR_HOST_URL is not required for SonarQube Cloud
