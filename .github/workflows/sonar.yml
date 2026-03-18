@@ -1,38 +1,40 @@
-name: SonarQube Cloud scan
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
 
-# Opt in to Node 24 for JS-based Actions (checkout, setup-node, etc.)
+# Keep the GitHub Actions runtime future-proof (see earlier message)
 env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-on:
-  push:
-    branches: [ main, master, develop ]
-  pull_request:
-    types: [opened, synchronize, reopened]
+- name: Use Node.js 20 for the app
+  uses: actions/setup-node@v4
+  with:
+    node-version: 20
+    cache: npm
 
-jobs:
-  scan:
-    runs-on: ubuntu-latest
+# (If you need private registry access, add the ~/.npmrc step here)
 
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+- name: Install deps
+  run: |
+    node -v
+    npm -v
+    if [ -f package-lock.json ]; then
+      npm ci --no-audit --no-fund
+    else
+      npm install --no-audit --no-fund
+    fi
 
-      # Build & test (adjust to your stack)
-      - name: Use Node.js 20 for your project runtime
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+- name: Run tests (with coverage)
+  run: npm test -- --coverage
 
-      - name: Install deps
-        run: npm ci
+- name: SonarQube Scan (SonarQube Cloud)
+  uses: SonarSource/sonarqube-scan-action@v7
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Unit tests with coverage
-        run: npm test -- --coverage
-
-      - name: SonarQube Scan (SonarQube Cloud)
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # SONAR_HOST_URL is not required for SonarQube Cloud
+# Show npm debug info if anything above failed
+- name: Show npm debug log (if any)
+  if: failure()
+  run: |
+    echo "---- npm debug files ----"
+    find . -name "npm-*.log" -maxdepth 2 -print -exec sed -n '1,200p' {} \;
