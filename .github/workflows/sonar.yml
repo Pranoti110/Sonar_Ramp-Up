@@ -34,7 +34,6 @@ env:
 
 
 # Show npm debug info if anything above failed
-#Changing something in the code
 - name: Show npm debug log (if any)
   if: failure()
   run: |
