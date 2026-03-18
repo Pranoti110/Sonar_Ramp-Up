@@ -32,7 +32,9 @@ env:
   env:
     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+
 # Show npm debug info if anything above failed
+#Changing something in the code
 - name: Show npm debug log (if any)
   if: failure()
   run: |
